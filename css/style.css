@@ -1,0 +1,38 @@
+*{
+	box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+body{
+	margin: 0;
+	padding: 0;
+}
+
+#morpion,
+#morpion div.container{
+	margin: 0 auto;
+	width: 500px;
+	height: 500px;
+	margin-top: 40px;
+}
+.cell{
+	width: 33.33%;
+	height: 33.33%;
+	border: 1px solid black;
+	float: left;
+	cursor: pointer;
+}
+.round{
+	background-image: url(../img/cercle.png);
+	background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.cross{
+	background-image: url(../img/croix.png);
+	background-repeat: no-repeat;
+    background-size: cover;
+}
+
+button{
+	margin-bottom: 10px;
+}
