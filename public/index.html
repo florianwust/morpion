@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <title>Gist hub</title>
+        <script src="js/react.js"></script>
+        <script src="js/react-dom.js"></script>
+        <script src="js/browser.min.js"></script>
+        <script src="https://code.jquery.com/jquery-2.1.4.js"></script>
+        <script src="js/bower_components/fetch/fetch.js"></script>
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+    <body>
+		<div id="morpion"></div>
+        <script type="text/babel">
+        	var Morpion = React.createClass({
+        		getInitialState: function(){
+        			return {
+                        id: '',
+						table: [
+                            ['','',''],
+                            ['','',''],
+                            ['','','']
+                        ],
+                        gameStart: false,
+                        player: '',
+                        turn: '',
+                        output: '',
+                        win: 'false',
+				    };
+        		},
+                componentDidMount: function(){
+                    var self = this;
+                    fetch('/games', {
+                        method: 'post',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    }).then(function(res){
+                        return res.json();
+                    }).then(function(json){
+                        self.setState({id: json.id, table: json.table, turn: json.turn, player: json.player})
+                    }).catch(function(ex) {
+                    console.log('parsing failed', ex)
+                  });
+                setInterval(function(){
+                    fetch('/games/'+ self.state.id, {
+                      method: 'get',
+                      headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                    }
+                    }).then(function(res){
+                        return res.json();
+                    }).then(function(json){
+                        console.log('parsed json', json);
+                        self.setState({table: json.table, turn: json.turn, gameStart: json.gameStart})
+                    })
+                }, 200);
+
+                },
+                play: function(id){
+                    return function(){
+                        if(this.state.turn != this.state.player){
+                            return false;
+                        }
+                        var xy = id.split('-')
+                        var x = parseInt(xy[0]);
+                        var y = parseInt(xy[1]);
+                        var newTable = this.state.table
+                        if(newTable[x-1][y-1] != ''){
+                            this.setState({output: 'Ce coup n\'est pas permis'})
+                            return;                                
+                        }
+                        if(this.state.turn == 'o'){
+                            newTable[x-1][y-1] = 'o'
+                            this.setState({turn: 'x', table: newTable, output: ''});
+                            this.checkWin('o', x-1, y-1)
+                        }else if(this.state.turn == 'x'){
+                            newTable[x-1][y-1] = 'x'
+                            this.setState({turn: 'o', table: newTable, output: ''}) 
+                            this.checkWin('x', x-1, y-1)   
+                        } 
+                        console.log(this.state.turn);
+                        var self = this;
+                        fetch('/games/'+ this.state.id +'/moves', {
+                            method: 'post',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                i: x,
+                                j: y,
+                                turn: self.state.turn,
+                                output: self.state.output
+                            })
+                        })
+                    }.bind(this)
+                },
+                checkWin: function(player, posX, posY){
+                        var self = this;
+                        if(this.state.table[posX][0] == this.state.table[posX][1] && this.state.table[posX][1] == this.state.table[posX][2] && this.state.table[posX][0] == this.state.table[posX][2]){
+                            this.setState({output: 'Le joueur '+player+' a gagné', win: 'true'});
+                        }
+                        if(this.state.table[0][posY] == this.state.table[1][posY] && this.state.table[1][posY] == this.state.table[2][posY] && this.state.table[0][posY] == this.state.table[2][posY]){
+                            this.setState({output: 'Le joueur '+player+' a gagné', win: 'true'});
+                        }
+                        if((this.state.table[0][0] == player && this.state.table[1][1] == player && this.state.table[2][2] == player) && (this.state.table[0][0] == this.state.table[1][1] && this.state.table[0][0] == this.state.table[2][2] && this.state.table[1][1] == this.state.table[2][2] )){
+                            this.setState({output: 'Le joueur '+player+' a gagné', win: 'true'});
+                        }
+                         if((this.state.table[0][2] == player && this.state.table[1][1] == player && this.state.table[2][0] == player) && (this.state.table[0][2] == this.state.table[1][1] && this.state.table[0][2] == this.state.table[2][0] && this.state.table[1][1] == this.state.table[2][0])){
+                             this.setState({output: 'Le joueur '+player+' a gagné', win: 'true'});
+                         }
+                         var res = 0
+                         for(var i = 0; i < this.state.table.length; i++){
+                            for(var j = 0; j < 3; j++){
+                                if(this.state.table[i][j] != ''){
+                                    res = res + 1
+                                }
+                            }
+                         }
+                        if(res == 9){
+                            this.setState({output: 'Match nul', win: 'true'});
+                        }
+                },
+                Restart: function(){
+                    this.setState(this.getInitialState())
+                },
+        		render: function(){
+                    if(this.state.gameStart == false){
+                        return(
+                            <div className="container">
+                                <h1>En attente d&apos;un autre joueur... </h1>
+                            </div>
+                        );
+                    } else{
+            			return(
+                             <div className="container">
+                                <div className="output">
+                                        <p>{this.state.output}</p>
+                                        {
+                                            this.state.win == 'true' ? <button onClick={this.Restart}>Restart</button> : null
+                                        }
+                                </div>
+                                {[1, 2, 3].map(function(x){
+                                    return [1, 2, 3].map(function(y){
+                                    var id = x+'-'+y
+
+                                    var style = 'cell'
+                                
+                                    if(this.state.table[x-1][y-1] == 'o'){
+                                        style += " o"
+                                    }
+                                    if(this.state.table[x-1][y-1] == 'x'){
+                                        style += " x"
+                                    }
+                                    return (
+                                        <div className={style} id={id} onClick={this.play(id)}>
+                                        </div>
+                                    ) 
+                                }.bind(this))}.bind(this))}
+                             </div>
+            			);
+                    }
+        		}
+        	});
+        	
+        	ReactDOM.render(
+        		<Morpion />,
+        		document.getElementById('morpion')
+        	);
+        </script>
+    </body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "morpion",
+  "version": "1.0.0",
+  "description": "La version multijoueur du morpion",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Florian Wust",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.13.3"
+  }
+}
