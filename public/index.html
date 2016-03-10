@@ -40,7 +40,7 @@
                     }).then(function(res){
                         return res.json();
                     }).then(function(json){
-                        self.setState({id: json.id, table: json.table, turn: json.turn, player: json.player})
+                        self.setState({id: json.id, table: json.table, turn: json.turn, player: json.player, output:'c\'est au tour des '+json.turn+' de jouer'})
                     }).catch(function(ex) {
                     console.log('parsing failed', ex)
                   });
@@ -54,8 +54,13 @@
                     }).then(function(res){
                         return res.json();
                     }).then(function(json){
-                        console.log('parsed json', json);
-                        self.setState({table: json.table, turn: json.turn, gameStart: json.gameStart})
+                        console.log(json)
+                        if(self.state.player == json.turn){
+                            var output = 'c\'est a vous de jouer';
+                        }else{
+                            var output = 'c\'est a votre adversaire de jouer';
+                        }
+                        self.setState({table: json.table, turn: json.turn, gameStart: json.gameStart, output:output})
                     })
                 }, 200);
 
